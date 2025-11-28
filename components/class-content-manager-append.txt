@@ -1,0 +1,127 @@
+    if (loading) return <div>Cargando materias...</div>
+
+    return (
+        <div className="space-y-6">
+            <div className="bg-white p-4 rounded-lg shadow-sm space-y-4">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div className="w-full md:w-1/3">
+                        <Label>Seleccionar Materia</Label>
+                        <Select value={selectedSubject} onValueChange={setSelectedSubject}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Elige una materia" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {subjects.map((s) => (
+                                    <SelectItem key={s.id_materia} value={s.id_materia.toString()}>
+                                        {s.nombre} - {s.curso?.nombre}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                        <DialogTrigger asChild>
+                            <Button onClick={handleOpenCreate} className="flex items-center gap-2" disabled={!selectedSubject}>
+                                <Plus className="w-4 h-4" />
+                                Nuevo Contenido
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>{isEditMode ? "Editar Contenido de Clase" : "Cargar Contenido de Clase"}</DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-4 py-4">
+                                <div className="space-y-2">
+                                    <Label>Fecha de la Clase</Label>
+                                    <Input
+                                        type="date"
+                                        value={newContent.fecha}
+                                        onChange={(e) => setNewContent({ ...newContent, fecha: e.target.value })}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Descripción / Resumen</Label>
+                                    <Textarea
+                                        placeholder="¿Qué se vio en la clase?"
+                                        value={newContent.descripcion}
+                                        onChange={(e) => setNewContent({ ...newContent, descripcion: e.target.value })}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Archivo PDF (opcional)</Label>
+                                    <Input
+                                        type="file"
+                                        accept=".pdf"
+                                        onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                                    />
+                                    {newContent.archivo_url && !selectedFile && (
+                                        <p className="text-sm text-gray-500 truncate max-w-[400px]" title={newContent.archivo_url.split('/').pop()}>
+                                            Archivo actual: {newContent.archivo_url.split('/').pop()}
+                                        </p>
+                                    )}
+                                </div>
+                                <Button onClick={handleSave} className="w-full" disabled={uploading}>
+                                    {uploading ? "Subiendo..." : (isEditMode ? "Actualizar" : "Guardar")}
+                                </Button>
+                            </div>
+                        </DialogContent>
+                    </Dialog>
+                </div>
+            </div>
+
+            <div className="grid gap-4">
+                {contents.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                        {selectedSubject
+                            ? "No hay contenidos cargados para esta materia."
+                            : "Selecciona una materia para ver su contenido."}
+                    </div>
+                ) : (
+                    contents.map((content) => (
+                        <Card key={content.id_contenido} className="bg-white">
+                            <CardContent className="p-4 flex flex-col md:flex-row gap-4 justify-between items-start">
+                                <div className="space-y-2 flex-1">
+                                    <div className="flex items-center gap-2 text-blue-600 font-medium">
+                                        <Calendar className="w-4 h-4" />
+                                        {format(new Date(content.fecha), "dd 'de' MMMM, yyyy", { locale: es })}
+                                    </div>
+                                    <p className="text-gray-800 whitespace-pre-wrap">{content.descripcion}</p>
+                                    {content.archivo_url && (
+                                        <a
+                                            href={content.archivo_url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-flex items-center gap-2 text-sm text-blue-600 hover:underline mt-2"
+                                        >
+                                            <LinkIcon className="w-4 h-4" />
+                                            Ver Material Adjunto
+                                        </a>
+                                    )}
+                                </div>
+                                <div className="flex gap-2">
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="text-gray-400 hover:text-blue-500"
+                                        onClick={() => handleOpenEdit(content)}
+                                    >
+                                        <Pencil className="w-4 h-4" />
+                                    </Button>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="text-gray-400 hover:text-red-500"
+                                        onClick={() => handleDelete(content.id_contenido)}
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </Button>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    ))
+                )}
+            </div>
+        </div>
+    )
+}

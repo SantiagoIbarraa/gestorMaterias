@@ -1,0 +1,74 @@
+PASOS PARA FORZAR QUE santyibarra123@gmail.com SEA ADMIN
+================================================================
+
+PASO 1: Ejecutar Script SQL
+----------------------------
+1. Ve a Supabase Dashboard -> SQL Editor
+2. Abre y ejecuta: scripts/010_force_admin_complete.sql
+3. Verifica que el PASO 4 muestre: role = 'admin'
+
+PASO 2: Verificar .env.local
+----------------------------
+Archivo: .env.local (en la raíz del proyecto)
+
+Debe contener estas 3 líneas:
+NEXT_PUBLIC_SUPABASE_URL=https://yzdksqysuglvbgtlivuz.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6ZGtzcXlzdWdsdmJndGxpdnV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI1MjUyODgsImV4cCI6MjA3ODEwMTI4OH0._jLKrv2WuyzNnlas7iD7JNOMgNq2GczV0Q4dMoK9rmc
+SUPABASE_SERVICE_ROLE_KEY=tu-service-role-key-de-supabase
+
+Si falta SUPABASE_SERVICE_ROLE_KEY:
+- Ve a Supabase Dashboard -> Settings -> API
+- Copia el "service_role key"
+- Pégalo en el .env.local
+
+PASO 3: Reiniciar Servidor
+----------------------------
+En la terminal donde corre npm run dev:
+1. Presiona Ctrl+C
+2. Ejecuta: npm run dev
+
+Verifica en la terminal que aparezca:
+[v0] Service Role Key exists: true
+
+PASO 4: Probar Login
+----------------------------
+1. Cierra sesión en la aplicación
+2. Abre la consola del navegador (F12)
+3. Inicia sesión con santyibarra123@gmail.com
+4. Verifica los logs:
+
+LOGS ESPERADOS EN LA CONSOLA:
+[Login] Role data: { ..., role: "admin" }
+[Header] Role fetched: { role: "admin" }
+
+LOGS ESPERADOS EN LA TERMINAL:
+[v0] POST /api/auth/get-role - Starting
+[v0] Service Role Key exists: true
+[v0] User role fetched: { ..., role: "admin" }
+
+PASO 5: Verificar Header
+----------------------------
+En la esquina superior derecha debería aparecer:
+- Tu email o nombre
+- Debajo: "Admin" (con mayúscula)
+
+PASO 6: Verificar Acceso a /admin
+----------------------------
+Ve a: http://localhost:3000/admin
+Deberías ver el panel de administración
+
+================================================================
+SI ALGO NO FUNCIONA:
+================================================================
+
+Problema: Service Role Key exists: false
+Solución: Verifica el .env.local y reinicia el servidor
+
+Problema: role: "usuario" en lugar de "admin"
+Solución: Ejecuta el script SQL nuevamente
+
+Problema: Error 401
+Solución: Ejecuta scripts/008_fix_rls_permissive.sql
+
+Problema: Te redirige a /dashboard
+Solución: Verifica los logs de la consola y del servidor
