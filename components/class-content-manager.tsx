@@ -79,7 +79,34 @@ export function ClassContentManager() {
             const { data: { user } } = await supabase.auth.getUser()
             if (!user) return
 
-            // 1. Get professor ID using user_id link
+            // 1. First check if user is admin using API route (bypasses RLS)
+            const roleResponse = await fetch("/api/auth/get-role", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ userId: user.id }),
+            })
+
+            const roleData = await roleResponse.json()
+            console.log("[ContentManager] Role check:", roleData)
+
+            if (roleData?.role === 'admin') {
+                // Admin: show ALL subjects
+                const { data: allSubjects, error } = await supabase
+                    .from("materia")
+                    .select("id_materia, nombre, carga_horaria, curso(nombre, nivel)")
+                    .order("nombre")
+
+                console.log("[ContentManager] Admin subjects:", allSubjects, error)
+
+                if (allSubjects && allSubjects.length > 0) {
+                    setSubjects(allSubjects as any)
+                    setSelectedSubject(allSubjects[0].id_materia.toString())
+                }
+                setLoading(false)
+                return
+            }
+
+            // 2. If not admin, get professor ID using user_id link
             const { data: professorData } = await supabase
                 .from("profesor")
                 .select("id_profesor")
@@ -87,23 +114,12 @@ export function ClassContentManager() {
                 .single()
 
             if (!professorData) {
-                // Check if admin
-                const { data: roleData } = await supabase
-                    .from("user_roles")
-                    .select("role")
-                    .eq("id", user.id)
-                    .maybeSingle()
-
-                if (roleData?.role === 'admin') {
-                    const { data: allSubjects } = await supabase
-                        .from("materia")
-                        .select("id_materia, nombre, carga_horaria, curso(nombre, nivel)")
-                    if (allSubjects) setSubjects(allSubjects as any)
-                }
+                console.log("[ContentManager] No professor found for user")
+                setLoading(false)
                 return
             }
 
-            // 2. Get assigned subjects
+            // 3. Get assigned subjects for this professor
             const { data: assignments } = await supabase
                 .from("profesor_materia")
                 .select("materia(id_materia, nombre, carga_horaria, curso(nombre, nivel))")
